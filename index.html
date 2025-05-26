@@ -384,42 +384,31 @@ function generateSKUs(data, format) {
     return row;
   });
 }
-function getFieldsInSKUFormat(format) {
-  const fields = [];
-  format.replace(/{(\w+)(?::(\d+))?}/g, (_, field) => {
-    fields.push(field);
-    return '';
-  });
-  return fields;
+// --- FIX: Always export all original columns + GeneratedSKU ---
+function getExportFields() {
+  if (!rawData.length) return ['GeneratedSKU'];
+  const originalFields = Object.keys(rawData[0]);
+  if (!originalFields.includes('GeneratedSKU')) originalFields.push('GeneratedSKU');
+  return originalFields;
 }
 function showPreview(data) {
   previewTable.innerHTML = "";
   if (!data.length) return;
-  const format = skuFormatInput.value;
-  const fields = getFieldsInSKUFormat(format).map(f => f.toLowerCase());
-  const showCols = new Set(fields.concat(['generatedsku']));
-  const row0 = data[0];
-  function resolveCol(field) {
-    if (/^option[123]value$/i.test(field)) {
-      return getOptionValueKey(row0, field.match(/^option([123])value$/i)[1]);
-    }
-    return Object.keys(row0).find(k => normalize(k) === normalize(field)) || field;
-  }
-  const headerFields = Array.from(showCols).map(resolveCol);
+  const exportFields = getExportFields();
   const skuCounts = {};
   data.forEach(row => {
     skuCounts[row.GeneratedSKU] = (skuCounts[row.GeneratedSKU] || 0) + 1;
   });
   const headerRow = previewTable.insertRow();
-  headerFields.forEach(h => {
+  exportFields.forEach(h => {
     const th = document.createElement("th");
-    th.innerText = h === 'generatedsku' ? 'GeneratedSKU' : h;
+    th.innerText = h;
     headerRow.appendChild(th);
   });
   data.forEach((row, i) => {
     const tr = previewTable.insertRow();
     if (skuCounts[row.GeneratedSKU] > 1) tr.classList.add("duplicate-sku");
-    headerFields.forEach(h => {
+    exportFields.forEach(h => {
       const td = tr.insertCell();
       td.innerText = row[h] || '';
       if (h === "GeneratedSKU") {
@@ -429,26 +418,13 @@ function showPreview(data) {
     });
   });
 }
-function getExportFields() {
-  const format = skuFormatInput.value;
-  const fields = getFieldsInSKUFormat(format).map(f => f.toLowerCase());
-  return Array.from(new Set(fields.concat(['generatedsku'])));
-}
 function exportCSV() {
   if (!processedData.length) return alert("No data to export");
   const exportFields = getExportFields();
   const exportData = processedData.map(row => {
     let obj = {};
     exportFields.forEach(f => {
-      if (/^option[123]value$/i.test(f)) {
-        const n = f.match(/^option([123])value$/i)[1];
-        obj[getOptionValueKey(row, n)] = getOptionValue(row, n);
-      } else if (f === 'generatedsku') {
-        obj['GeneratedSKU'] = row['GeneratedSKU'];
-      } else {
-        const key = Object.keys(row).find(k => normalize(k) === normalize(f));
-        if (key) obj[key] = row[key];
-      }
+      obj[f] = row[f] !== undefined ? row[f] : "";
     });
     return obj;
   });
@@ -463,15 +439,7 @@ function exportXLSX() {
   const exportData = processedData.map(row => {
     let obj = {};
     exportFields.forEach(f => {
-      if (/^option[123]value$/i.test(f)) {
-        const n = f.match(/^option([123])value$/i)[1];
-        obj[getOptionValueKey(row, n)] = getOptionValue(row, n);
-      } else if (f === 'generatedsku') {
-        obj['GeneratedSKU'] = row['GeneratedSKU'];
-      } else {
-        const key = Object.keys(row).find(k => normalize(k) === normalize(f));
-        if (key) obj[key] = row[key];
-      }
+      obj[f] = row[f] !== undefined ? row[f] : "";
     });
     return obj;
   });
@@ -486,15 +454,7 @@ function exportZIP() {
   const exportData = processedData.map(row => {
     let obj = {};
     exportFields.forEach(f => {
-      if (/^option[123]value$/i.test(f)) {
-        const n = f.match(/^option([123])value$/i)[1];
-        obj[getOptionValueKey(row, n)] = getOptionValue(row, n);
-      } else if (f === 'generatedsku') {
-        obj['GeneratedSKU'] = row['GeneratedSKU'];
-      } else {
-        const key = Object.keys(row).find(k => normalize(k) === normalize(f));
-        if (key) obj[key] = row[key];
-      }
+      obj[f] = row[f] !== undefined ? row[f] : "";
     });
     return obj;
   });
@@ -616,8 +576,9 @@ pushShopifyBtn.addEventListener('click', async function() {
   if (!token) return;
   if (!confirm("Are you sure you want to update SKUs in Shopify? This cannot be undone.")) return;
   let variantIdKey = Object.keys(processedData[0]).find(k => normalize(k) === normalize('variant id'));
-  let skuKey = Object.keys(processedData[0]).find(k => normalize(k) === normalize('generatedsku'));
   if (!variantIdKey) variantIdKey = Object.keys(processedData[0]).find(k => normalize(k) === normalize('variantid'));
+  if (!variantIdKey) variantIdKey = Object.keys(processedData[0]).find(k => normalize(k) === normalize('id'));
+  let skuKey = Object.keys(processedData[0]).find(k => normalize(k) === normalize('generatedsku'));
   if (!skuKey) skuKey = 'GeneratedSKU';
   if (!variantIdKey) {
     alert("Variant ID column not found in your file. Shopify API requires Variant IDs.");
