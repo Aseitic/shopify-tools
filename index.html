@@ -7,7 +7,235 @@
   <link rel="icon" href="logo.png" />
   <link href="https://fonts.googleapis.com/css?family=Inter:400,600&display=swap" rel="stylesheet">
   <style>
-    /* ... (same CSS as before, omitted for brevity) ... */
+    :root {
+      --bg: #f7f8fa;
+      --card-bg: #fff;
+      --text: #23272f;
+      --primary: #2563eb;
+      --primary-dark: #1741a0;
+      --border: #e5e7eb;
+      --shadow: 0 2px 16px 0 rgba(0,0,0,0.06);
+      --accent: #22c55e;
+      --danger: #ffe4e6;
+    }
+    body.dark {
+      --bg: #181a1b;
+      --card-bg: #23272f;
+      --text: #f3f4f6;
+      --primary: #3b82f6;
+      --primary-dark: #1741a0;
+      --border: #2d3237;
+      --shadow: 0 2px 16px 0 rgba(0,0,0,0.18);
+      --accent: #22c55e;
+      --danger: #4b1c1c;
+    }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Inter', Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      transition: background 0.3s, color 0.3s;
+    }
+    .container {
+      max-width: 1020px;
+      margin: 2em auto;
+      background: var(--card-bg);
+      border-radius: 18px;
+      box-shadow: var(--shadow);
+      padding: 2em 2em 1.5em 2em;
+    }
+    .logo-wrap {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: linear-gradient(135deg, #f1f5fd 60%, #dbeafe 100%);
+      border-radius: 50%;
+      width: 120px;
+      height: 120px;
+      box-shadow: 0 4px 24px 0 rgba(37,99,235,0.15);
+      margin: 0 auto 1.5em auto;
+    }
+    .logo {
+      max-width: 90px;
+      max-height: 90px;
+      width: 100%;
+      height: auto;
+      border-radius: 16px;
+      box-shadow: 0 2px 8px 0 rgba(37,99,235,0.10);
+      background: transparent;
+      display: block;
+    }
+    h1 {
+      font-size: 2.1em;
+      font-weight: 600;
+      margin: 0 0 1.2em 0;
+      letter-spacing: -1px;
+      text-align: center;
+    }
+    .download-buttons {
+      display: flex;
+      justify-content: center;
+      gap: 1em;
+      margin-bottom: 1.5em;
+      flex-wrap: wrap;
+    }
+    .sku-builder {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1.2em;
+      align-items: center;
+      margin-bottom: 1.2em;
+    }
+    .sku-builder label {
+      margin-right: 0.6em;
+      font-size: 1em;
+      font-weight: 500;
+      cursor: pointer;
+    }
+    .sku-builder input[type="number"] {
+      width: 2.5em;
+      margin-left: 0.2em;
+      border-radius: 5px;
+      border: 1px solid var(--border);
+      padding: 0.2em 0.4em;
+      background: var(--card-bg);
+      color: var(--text);
+    }
+    select, input[type="file"], input[type="number"] {
+      border-radius: 7px;
+      border: 1px solid var(--border);
+      background: var(--card-bg);
+      color: var(--text);
+      font-size: 1em;
+      padding: 0.4em 0.7em;
+      transition: border 0.2s;
+    }
+    select:focus, input:focus {
+      outline: none;
+      border-color: var(--primary);
+    }
+    button {
+      background: var(--primary);
+      color: #fff;
+      border: none;
+      border-radius: 7px;
+      padding: 0.6em 1.3em;
+      font-size: 1em;
+      font-weight: 500;
+      margin: 0.6em 0.5em 0.6em 0;
+      box-shadow: 0 1px 4px 0 rgba(37,99,235,0.07);
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    button:hover {
+      background: var(--primary-dark);
+    }
+    #dropzone {
+      padding: 2em;
+      border: 2px dashed var(--primary);
+      border-radius: 12px;
+      text-align: center;
+      margin-bottom: 1em;
+      cursor: pointer;
+      user-select: none;
+      background: #f1f5fd;
+      color: var(--primary-dark);
+      font-weight: 600;
+      transition: border-color 0.2s, background 0.2s, color 0.2s;
+    }
+    #dropzone.dragover {
+      border-color: var(--accent);
+      background: #e7fbe7;
+      color: #15803d;
+    }
+    body.dark #dropzone {
+      background: #23272f;
+      color: var(--primary);
+    }
+    body.dark #dropzone.dragover {
+      background: #223322;
+      color: var(--accent);
+    }
+    #status {
+      margin-bottom: 1em;
+      font-size: 1em;
+      color: var(--primary-dark);
+    }
+    .table-scroll {
+      overflow-x: auto;
+      width: 100%;
+      margin-top: 1.5em;
+      border-radius: 12px;
+      background: var(--card-bg);
+      box-shadow: 0 1px 4px 0 rgba(0,0,0,0.04);
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 600px;
+      background: var(--card-bg);
+    }
+    th, td {
+      border: 1px solid var(--border);
+      padding: 0.5em 0.7em;
+      white-space: nowrap;
+      height: 2.2em;
+      line-height: 1.5em;
+      vertical-align: middle;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 220px;
+      font-size: 1em;
+      background: var(--card-bg);
+    }
+    td[contenteditable="true"] {
+      background: #f9fafb;
+      white-space: normal;
+      min-width: 120px;
+      max-width: 250px;
+      overflow-wrap: break-word;
+      word-break: break-word;
+      border: 1.5px solid var(--primary);
+      border-radius: 4px;
+    }
+    th {
+      background: #f3f6fa;
+      font-weight: 600;
+      position: sticky;
+      top: 0;
+      z-index: 1;
+      color: var(--primary-dark);
+      letter-spacing: 0.01em;
+    }
+    .dark th, .dark td {
+      border-color: #444;
+    }
+    .dark th {
+      background: #23272f;
+      color: var(--primary);
+    }
+    .dark td[contenteditable="true"] {
+      background: #23272f;
+    }
+    tr.duplicate-sku {
+      background: var(--danger) !important;
+    }
+    @media (max-width: 900px) {
+      .container { padding: 1em 0.3em; }
+      th, td { font-size: 0.95em; max-width: 120px; }
+      .logo-wrap { width: 70px; height: 70px; }
+      .logo { max-width: 50px; max-height: 50px; }
+      .sku-builder { flex-direction: column; align-items: flex-start; }
+      .download-buttons { flex-direction: column; gap: 0.4em; }
+      .table-scroll { min-width: 0; }
+    }
+    @media (max-width: 600px) {
+      .container { padding: 0.5em 0.1em; }
+      th, td { font-size: 0.86em; max-width: 90px; }
+      .logo-wrap { width: 50px; height: 50px; }
+      .logo { max-width: 35px; max-height: 35px; }
+    }
   </style>
 </head>
 <body>
@@ -54,7 +282,7 @@
   <div id="dropzone">Drop CSV/XLSX here or click to upload</div>
   <input type="file" id="fileInput" accept=".csv,.xlsx" style="display:none" />
   <div id="status"></div>
-  <table id="previewTable"></table>
+  <div class="table-scroll"><table id="previewTable"></table></div>
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.0/jszip.min.js"></script>
