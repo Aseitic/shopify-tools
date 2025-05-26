@@ -279,6 +279,9 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.0/jszip.min.js"></script>
 <script>
+// Hide these columns from the preview table but keep them in export/download
+const hiddenPreviewColumns = ["Body (HTML)"]; // Add more columns as needed
+
 function normalize(str) {
   return (str || "").toLowerCase().replace(/[\s_\/\(\)\-]+/g, "");
 }
@@ -384,7 +387,6 @@ function generateSKUs(data, format) {
     return row;
   });
 }
-// --- FIX: Always export all original columns + GeneratedSKU ---
 function getExportFields() {
   if (!rawData.length) return ['GeneratedSKU'];
   const originalFields = Object.keys(rawData[0]);
@@ -395,12 +397,16 @@ function showPreview(data) {
   previewTable.innerHTML = "";
   if (!data.length) return;
   const exportFields = getExportFields();
+  // Filter out hidden columns for preview
+  const previewFields = exportFields.filter(
+    h => !hiddenPreviewColumns.includes(h)
+  );
   const skuCounts = {};
   data.forEach(row => {
     skuCounts[row.GeneratedSKU] = (skuCounts[row.GeneratedSKU] || 0) + 1;
   });
   const headerRow = previewTable.insertRow();
-  exportFields.forEach(h => {
+  previewFields.forEach(h => {
     const th = document.createElement("th");
     th.innerText = h;
     headerRow.appendChild(th);
@@ -408,7 +414,7 @@ function showPreview(data) {
   data.forEach((row, i) => {
     const tr = previewTable.insertRow();
     if (skuCounts[row.GeneratedSKU] > 1) tr.classList.add("duplicate-sku");
-    exportFields.forEach(h => {
+    previewFields.forEach(h => {
       const td = tr.insertCell();
       td.innerText = row[h] || '';
       if (h === "GeneratedSKU") {
