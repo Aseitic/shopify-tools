@@ -1,309 +1,309 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>SKU Generator</title>
-  <link rel="icon" href="logo.png" />
-  <link href="https://fonts.googleapis.com/css?family=Inter:400,600&display=swap" rel="stylesheet">
-  <style>
-    :root {
-      --bg: #f7f8fa;
-      --card-bg: #fff;
-      --text: #23272f;
-      --primary: #2563eb;
-      --primary-dark: #1741a0;
-      --border: #e5e7eb;
-      --shadow: 0 2px 16px 0 rgba(0,0,0,0.06);
-      --accent: #22c55e;
-      --danger: #ffe4e6;
-    }
-    body.dark {
-      --bg: #181a1b;
-      --card-bg: #23272f;
-      --text: #f3f4f6;
-      --primary: #3b82f6;
-      --primary-dark: #1741a0;
-      --border: #2d3237;
-      --shadow: 0 2px 16px 0 rgba(0,0,0,0.18);
-      --accent: #22c55e;
-      --danger: #4b1c1c;
-    }
-    body {
-      background: var(--bg);
-      color: var(--text);
-      font-family: 'Inter', Arial, sans-serif;
-      margin: 0;
-      padding: 0;
-      transition: background 0.3s, color 0.3s;
-    }
-    .container {
-      max-width: 1020px;
-      margin: 2em auto;
-      background: var(--card-bg);
-      border-radius: 18px;
-      box-shadow: var(--shadow);
-      padding: 2em 2em 1.5em 2em;
-    }
-    .logo-wrap {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      background: linear-gradient(135deg, #f1f5fd 60%, #dbeafe 100%);
-      border-radius: 50%;
-      width: 120px;
-      height: 120px;
-      box-shadow: 0 4px 24px 0 rgba(37,99,235,0.15);
-      margin: 0 auto 1.5em auto;
-    }
-    .logo {
-      max-width: 90px;
-      max-height: 90px;
-      width: 100%;
-      height: auto;
-      border-radius: 16px;
-      box-shadow: 0 2px 8px 0 rgba(37,99,235,0.10);
-      background: transparent;
-      display: block;
-    }
-    h1 {
-      font-size: 2.1em;
-      font-weight: 600;
-      margin: 0 0 1.2em 0;
-      letter-spacing: -1px;
-      text-align: center;
-    }
-    .download-buttons {
-      display: flex;
-      justify-content: center;
-      gap: 1em;
-      margin-bottom: 1.5em;
-      flex-wrap: wrap;
-    }
-    .sku-builder {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 1.2em;
-      align-items: center;
-      margin-bottom: 1.2em;
-    }
-    .sku-builder label {
-      margin-right: 0.6em;
-      font-size: 1em;
-      font-weight: 500;
-      cursor: pointer;
-    }
-    .sku-builder input[type="number"] {
-      width: 2.5em;
-      margin-left: 0.2em;
-      border-radius: 5px;
-      border: 1px solid var(--border);
-      padding: 0.2em 0.4em;
-      background: var(--card-bg);
-      color: var(--text);
-    }
-    select, input[type="file"], input[type="number"] {
-      border-radius: 7px;
-      border: 1px solid var(--border);
-      background: var(--card-bg);
-      color: var(--text);
-      font-size: 1em;
-      padding: 0.4em 0.7em;
-      transition: border 0.2s;
-    }
-    select:focus, input:focus {
-      outline: none;
-      border-color: var(--primary);
-    }
-    button {
-      background: var(--primary);
-      color: #fff;
-      border: none;
-      border-radius: 7px;
-      padding: 0.6em 1.3em;
-      font-size: 1em;
-      font-weight: 500;
-      margin: 0.6em 0.5em 0.6em 0;
-      box-shadow: 0 1px 4px 0 rgba(37,99,235,0.07);
-      cursor: pointer;
-      transition: background 0.2s;
-    }
-    button:hover {
-      background: var(--primary-dark);
-    }
-    #dropzone {
-      padding: 2em;
-      border: 2px dashed var(--primary);
-      border-radius: 12px;
-      text-align: center;
-      margin-bottom: 1em;
-      cursor: pointer;
-      user-select: none;
-      background: #f1f5fd;
-      color: var(--primary-dark);
-      font-weight: 600;
-      transition: border-color 0.2s, background 0.2s, color 0.2s;
-    }
-    #dropzone.dragover {
-      border-color: var(--accent);
-      background: #e7fbe7;
-      color: #15803d;
-    }
-    body.dark #dropzone {
-      background: #23272f;
-      color: var(--primary);
-    }
-    body.dark #dropzone.dragover {
-      background: #223322;
-      color: var(--accent);
-    }
-    #status {
-      margin-bottom: 1em;
-      font-size: 1em;
-      color: var(--primary-dark);
-    }
-    .table-scroll {
-      overflow-x: auto;
-      width: 100%;
-      margin-top: 1.5em;
-      border-radius: 12px;
-      background: var(--card-bg);
-      box-shadow: 0 1px 4px 0 rgba(0,0,0,0.04);
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      min-width: 600px;
-      background: var(--card-bg);
-    }
-    th, td {
-      border: 1px solid var(--border);
-      padding: 0.5em 0.7em;
-      white-space: nowrap;
-      height: 2.2em;
-      line-height: 1.5em;
-      vertical-align: middle;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      max-width: 220px;
-      font-size: 1em;
-      background: var(--card-bg);
-    }
-    td[contenteditable="true"] {
-      background: #f9fafb;
-      white-space: normal;
-      min-width: 120px;
-      max-width: 250px;
-      overflow-wrap: break-word;
-      word-break: break-word;
-      border: 1.5px solid var(--primary);
-      border-radius: 4px;
-    }
-    th {
-      background: #f3f6fa;
-      font-weight: 600;
-      position: sticky;
-      top: 0;
-      z-index: 1;
-      color: var(--primary-dark);
-      letter-spacing: 0.01em;
-    }
-    .dark th, .dark td {
-      border-color: #444;
-    }
-    .dark th {
-      background: #23272f;
-      color: var(--primary);
-    }
-    .dark td[contenteditable="true"] {
-      background: #23272f;
-    }
-    tr.duplicate-sku {
-      background: var(--danger) !important;
-    }
-    @media (max-width: 900px) {
-      .container { padding: 1em 0.3em; }
-      th, td { font-size: 0.95em; max-width: 120px; }
-      .logo-wrap { width: 70px; height: 70px; }
-      .logo { max-width: 50px; max-height: 50px; }
-      .sku-builder { flex-direction: column; align-items: flex-start; }
-      .download-buttons { flex-direction: column; gap: 0.4em; }
-      .table-scroll { min-width: 0; }
-    }
-    @media (max-width: 600px) {
-      .container { padding: 0.5em 0.1em; }
-      th, td { font-size: 0.86em; max-width: 90px; }
-      .logo-wrap { width: 50px; height: 50px; }
-      .logo { max-width: 35px; max-height: 35px; }
-    }
-  </style>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>SKU Generator (Inventory Export)</title>
+<link rel="icon" href="logo.png" />
+<link href="https://fonts.googleapis.com/css?family=Inter:400,600&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --bg: #f7f8fa;
+    --card-bg: #fff;
+    --text: #23272f;
+    --primary: #2563eb;
+    --primary-dark: #1741a0;
+    --border: #e5e7eb;
+    --shadow: 0 2px 16px 0 rgba(0,0,0,0.06);
+    --accent: #22c55e;
+    --danger: #ffe4e6;
+  }
+  body.dark {
+    --bg: #181a1b;
+    --card-bg: #23272f;
+    --text: #f3f4f6;
+    --primary: #3b82f6;
+    --primary-dark: #1741a0;
+    --border: #2d3237;
+    --shadow: 0 2px 16px 0 rgba(0,0,0,0.18);
+    --accent: #22c55e;
+    --danger: #4b1c1c;
+  }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    transition: background 0.3s, color 0.3s;
+  }
+  .container {
+    max-width: 1020px;
+    margin: 2em auto;
+    background: var(--card-bg);
+    border-radius: 18px;
+    box-shadow: var(--shadow);
+    padding: 2em 2em 1.5em 2em;
+  }
+  .logo-wrap {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: linear-gradient(135deg, #f1f5fd 60%, #dbeafe 100%);
+    border-radius: 50%;
+    width: 120px;
+    height: 120px;
+    box-shadow: 0 4px 24px 0 rgba(37,99,235,0.15);
+    margin: 0 auto 1.5em auto;
+  }
+  .logo {
+    max-width: 90px;
+    max-height: 90px;
+    width: 100%;
+    height: auto;
+    border-radius: 16px;
+    box-shadow: 0 2px 8px 0 rgba(37,99,235,0.10);
+    background: transparent;
+    display: block;
+  }
+  h1 {
+    font-size: 2.1em;
+    font-weight: 600;
+    margin: 0 0 1.2em 0;
+    letter-spacing: -1px;
+    text-align: center;
+  }
+  .download-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 1em;
+    margin-bottom: 1.5em;
+    flex-wrap: wrap;
+  }
+  .sku-builder {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.2em;
+    align-items: center;
+    margin-bottom: 1.2em;
+  }
+  .sku-builder label {
+    margin-right: 0.6em;
+    font-size: 1em;
+    font-weight: 500;
+    cursor: pointer;
+  }
+  .sku-builder input[type="number"] {
+    width: 2.5em;
+    margin-left: 0.2em;
+    border-radius: 5px;
+    border: 1px solid var(--border);
+    padding: 0.2em 0.4em;
+    background: var(--card-bg);
+    color: var(--text);
+  }
+  select, input[type="file"], input[type="number"] {
+    border-radius: 7px;
+    border: 1px solid var(--border);
+    background: var(--card-bg);
+    color: var(--text);
+    font-size: 1em;
+    padding: 0.4em 0.7em;
+    transition: border 0.2s;
+  }
+  select:focus, input:focus {
+    outline: none;
+    border-color: var(--primary);
+  }
+  button {
+    background: var(--primary);
+    color: #fff;
+    border: none;
+    border-radius: 7px;
+    padding: 0.6em 1.3em;
+    font-size: 1em;
+    font-weight: 500;
+    margin: 0.6em 0.5em 0.6em 0;
+    box-shadow: 0 1px 4px 0 rgba(37,99,235,0.07);
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+  button:hover {
+    background: var(--primary-dark);
+  }
+  #toggleDarkModeBtn {
+    float: right;
+    margin: 0 0 1em 1em;
+    background: #444;
+    color: #fff;
+    font-size: 0.97em;
+    padding: 0.5em 1em;
+  }
+  #dropzone {
+    padding: 2em;
+    border: 2px dashed var(--primary);
+    border-radius: 12px;
+    text-align: center;
+    margin-bottom: 1em;
+    cursor: pointer;
+    user-select: none;
+    background: #f1f5fd;
+    color: var(--primary-dark);
+    font-weight: 600;
+    transition: border-color 0.2s, background 0.2s, color 0.2s;
+  }
+  #dropzone.dragover {
+    border-color: var(--accent);
+    background: #e7fbe7;
+    color: #15803d;
+  }
+  body.dark #dropzone {
+    background: #23272f;
+    color: var(--primary);
+  }
+  body.dark #dropzone.dragover {
+    background: #223322;
+    color: var(--accent);
+  }
+  .table-scroll {
+    overflow-x: auto;
+    width: 100%;
+    margin-top: 1.5em;
+    border-radius: 12px;
+    background: var(--card-bg);
+    box-shadow: 0 1px 4px 0 rgba(0,0,0,0.04);
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 600px;
+    background: var(--card-bg);
+  }
+  th, td {
+    border: 1px solid var(--border);
+    padding: 0.5em 0.7em;
+    white-space: nowrap;
+    height: 2.2em;
+    line-height: 1.5em;
+    vertical-align: middle;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 220px;
+    font-size: 1em;
+    background: var(--card-bg);
+  }
+  td[contenteditable="true"] {
+    background: #f9fafb;
+    white-space: normal;
+    min-width: 120px;
+    max-width: 250px;
+    overflow-wrap: break-word;
+    word-break: break-word;
+    border: 1.5px solid var(--primary);
+    border-radius: 4px;
+  }
+  th {
+    background: #f3f6fa;
+    font-weight: 600;
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    color: var(--primary-dark);
+    letter-spacing: 0.01em;
+  }
+  .dark th, .dark td {
+    border-color: #444;
+  }
+  .dark th {
+    background: #23272f;
+    color: var(--primary);
+  }
+  .dark td[contenteditable="true"] {
+    background: #23272f;
+  }
+  tr.duplicate-sku {
+    background: var(--danger) !important;
+  }
+  @media (max-width: 900px) {
+    .container { padding: 1em 0.3em; }
+    th, td { font-size: 0.95em; max-width: 120px; }
+    .logo-wrap { width: 70px; height: 70px; }
+    .logo { max-width: 50px; max-height: 50px; }
+    .sku-builder { flex-direction: column; align-items: flex-start; }
+    .download-buttons { flex-direction: column; gap: 0.4em; }
+    .table-scroll { min-width: 0; }
+  }
+  @media (max-width: 600px) {
+    .container { padding: 0.5em 0.1em; }
+    th, td { font-size: 0.86em; max-width: 90px; }
+    .logo-wrap { width: 50px; height: 50px; }
+    .logo { max-width: 35px; max-height: 35px; }
+  }
+</style>
 </head>
 <body>
 <div class="container">
+  <button id="toggleDarkModeBtn" type="button">🌙</button>
   <div class="logo-wrap">
     <img src="logo.png" alt="Logo" class="logo" />
   </div>
-  <h1>SKU Generator</h1>
-  <div class="download-buttons">
-    <button id="downloadCSVBtn">Download CSV</button>
-    <button id="downloadXLSXBtn">Download XLSX</button>
-    <button id="downloadZIPBtn">Download ZIP</button>
-  </div>
-  <div class="sku-builder">
+  <h1>SKU Generator (Inventory Export)</h1>
+  <div id="dropzone">Drop your Shopify Inventory CSV here or click to upload</div>
+  <input type="file" id="fileInput" accept=".csv,.xlsx" style="display:none" />
+  <div class="sku-builder" style="margin-top:1em;">
     <label for="skuFormatPreset">SKU Format Preset:</label>
     <select id="skuFormatPreset">
-      <option value="{vendor:3}-{productcategory:5}-{material:2}-{connectiontype:3}-{keyboardswitchtype:3}-{color:3}">Full (recommended)</option>
-      <option value="{vendor:3}-{productcategory:5}-{color:3}">Vendor-Line-Color</option>
-      <option value="{vendor:3}-{productcategory:5}-{material:2}-{color:3}">Vendor-Line-Material-Color</option>
-      <option value="{vendor:3}-{productcategory:5}-{keyboardswitchtype:3}-{color:3}">Vendor-Line-Switch-Color</option>
-      <option value="{vendor:3}-{productcategory:5}-{option1value:3}-{option2value:3}-{option3value:3}">Vendor-Line-Opt1Val-Opt2Val-Opt3Val</option>
-      <option value="{vendor:3}-{productcategory:5}-{option1value:3}">Vendor-Line-Opt1Val</option>
-      <option value="{vendor:3}-{productcategory:5}">Vendor-Line</option>
+      <option value="{handle:3}-{vendor:3}-{option1value:3}-{option2value:3}-{option3value:3}-{seq}">Handle-Vendor-Opt1-Opt2-Opt3-Seq</option>
+      <option value="{handle:3}-{vendor:3}-{option1value:3}-{option2value:3}-{seq}">Handle-Vendor-Opt1-Opt2-Seq</option>
+      <option value="{handle:3}-{vendor:3}-{option1value:3}-{seq}">Handle-Vendor-Opt1-Seq</option>
+      <option value="{handle:3}-{vendor:3}-{seq}">Handle-Vendor-Seq</option>
       <option value="custom">Custom…</option>
     </select>
-    <span id="skuCustomBuilder" style="display:none;">
+    <span id="skuCustomBuilder" style="display:none; margin-left:1em;">
+      <label><input type="checkbox" class="sku-part" data-field="handle" checked>Handle</label>
       <label><input type="checkbox" class="sku-part" data-field="vendor" checked>Vendor</label>
-      <label><input type="checkbox" class="sku-part" data-field="productcategory" checked>Product Category</label>
-      <label><input type="checkbox" class="sku-part" data-field="material" checked>Material</label>
-      <label><input type="checkbox" class="sku-part" data-field="connectiontype" checked>Connection Type</label>
-      <label><input type="checkbox" class="sku-part" data-field="keyboardswitchtype" checked>Switch</label>
       <label><input type="checkbox" class="sku-part" data-field="color" checked>Color</label>
-      <label><input type="checkbox" class="sku-part" data-field="option1value">Option 1 Value</label>
-      <label><input type="checkbox" class="sku-part" data-field="option2value">Option 2 Value</label>
-      <label><input type="checkbox" class="sku-part" data-field="option3value">Option 3 Value</label>
+      <label><input type="checkbox" class="sku-part" data-field="option1value" checked>Option1 Value</label>
+      <label><input type="checkbox" class="sku-part" data-field="option2value" checked>Option2 Value</label>
+      <label><input type="checkbox" class="sku-part" data-field="option3value" checked>Option3 Value</label>
+      <label><input type="checkbox" class="sku-part" data-field="seq" checked>Sequence</label>
       <label style="margin-left:1em;">Max Letters:
         <input type="number" id="skuMaxLen" value="3" min="1" max="8" />
       </label>
     </span>
   </div>
-  <input type="hidden" id="skuFormat" value="{vendor:3}-{productcategory:5}-{material:2}-{connectiontype:3}-{keyboardswitchtype:3}-{color:3}" />
-  <button id="toggleDarkModeBtn" type="button">Toggle Dark Mode</button>
-  <button id="pushShopifyBtn" type="button">Push to Shopify</button>
-  <div id="dropzone">Drop CSV/XLSX here or click to upload</div>
-  <input type="file" id="fileInput" accept=".csv,.xlsx" style="display:none" />
-  <div id="status"></div>
-  <div class="table-scroll"><table id="previewTable"></table></div>
+  <div class="download-buttons">
+    <button id="downloadCSVBtn">Download CSV</button>
+    <button id="downloadXLSXBtn">Download XLSX</button>
+    <button id="downloadZIPBtn">Download ZIP</button>
+    <button id="pushShopifyBtn">Push to Shopify</button>
+  </div>
+  <div class="table-scroll">
+    <table id="previewTable"></table>
+  </div>
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.0/jszip.min.js"></script>
 <script>
-// Hide these columns from the preview table but keep them in export/download
-const hiddenPreviewColumns = [
-  "Body (HTML)",
-  "Description (product.metafields.custom.description)",
-  "Description: Content (product.metafields.custom.description_content_text)",
-  "Description: Main Heading (product.metafields.custom.description_heading)",
-  "Description Subheading (Small Text Above Header) (product.metafields.custom.description_subheading)",
-  "Row 1 - Specifications (product.metafields.custom.row_1)",
-  "Row 2 - Inside the Box (product.metafields.custom.row_2)",
-  "Row 3 - Compatibility (product.metafields.custom.row_3_compatibility_)",
-  "Row 4 - Warranty (product.metafields.custom.row_4_warranty)"
-  // Add more column names if needed
-];
+const dropzone = document.getElementById('dropzone');
+const fileInput = document.getElementById('fileInput');
+const previewTable = document.getElementById('previewTable');
+const skuFormatPreset = document.getElementById('skuFormatPreset');
+const skuCustomBuilder = document.getElementById('skuCustomBuilder');
+const skuMaxLen = document.getElementById('skuMaxLen');
+const downloadCSVBtn = document.getElementById('downloadCSVBtn');
+const downloadXLSXBtn = document.getElementById('downloadXLSXBtn');
+const downloadZIPBtn = document.getElementById('downloadZIPBtn');
+const toggleDarkModeBtn = document.getElementById('toggleDarkModeBtn');
+const pushShopifyBtn = document.getElementById('pushShopifyBtn');
+
+let rawData = [];
+let processedData = [];
 
 function normalize(str) {
   return (str || "").toLowerCase().replace(/[\s_\/\(\)\-]+/g, "");
 }
+
 function getCol(row, ...names) {
   const keys = Object.keys(row);
   for (const name of names) {
@@ -313,40 +313,7 @@ function getCol(row, ...names) {
   }
   return "";
 }
-function getOptionValue(row, n) {
-  return getCol(row, `Option${n} Value`, `option${n} value`, `option${n}value`);
-}
-function getOptionValueKey(row, n) {
-  const keys = Object.keys(row);
-  for (const name of [`Option${n} Value`, `option${n} value`, `option${n}value`]) {
-    const norm = normalize(name);
-    const found = keys.find(k => normalize(k) === norm);
-    if (found) return found;
-  }
-  return `Option${n} Value`;
-}
-const fileInput = document.getElementById('fileInput');
-const dropzone = document.getElementById('dropzone');
-const previewTable = document.getElementById('previewTable');
-const status = document.getElementById('status');
-const skuFormatInput = document.getElementById('skuFormat');
-const skuFormatPreset = document.getElementById('skuFormatPreset');
-const skuCustomBuilder = document.getElementById('skuCustomBuilder');
-const skuMaxLen = document.getElementById('skuMaxLen');
-const toggleDarkModeBtn = document.getElementById('toggleDarkModeBtn');
-const pushShopifyBtn = document.getElementById('pushShopifyBtn');
-let rawData = [], processedData = [];
-function toggleDarkMode() {
-  document.body.classList.toggle('dark');
-  localStorage.setItem("theme", document.body.classList.contains("dark") ? "dark" : "light");
-}
-toggleDarkModeBtn.addEventListener('click', toggleDarkMode);
-function loadTheme() {
-  if (localStorage.getItem("theme") === "dark") {
-    document.body.classList.add("dark");
-  }
-}
-loadTheme();
+
 function clean(str = "", max = 3) {
   return str.toString()
     .toLowerCase()
@@ -354,88 +321,65 @@ function clean(str = "", max = 3) {
     .toUpperCase()
     .substring(0, max);
 }
-function parseFormat(format, row) {
-  // Find all {field[:len]} in format
+
+function parseFormat(format, row, seq) {
   let fields = [];
   let regex = /{(\w+)(?::(\d+))?}/g;
   let match;
   while ((match = regex.exec(format))) {
-    fields.push({ field: match[1], len: match[2] ? parseInt(match[2]) : 3 });
+    fields.push({field: match[1], len: match[2] ? parseInt(match[2]) : 3});
   }
-  // Build parts, skipping empty fields
   let parts = fields.map(({field, len}) => {
     let val = "";
-    if (/^option[123]value$/i.test(field)) {
+    if (field === "seq") {
+      val = seq;
+    } else if (/^option[123]value$/i.test(field)) {
       const n = field.match(/^option([123])value$/i)[1];
-      val = getOptionValue(row, n);
+      val = getCol(row, `Option${n} Value`);
     } else {
-      val = getCol(row, field, field.toLowerCase());
+      val = getCol(row, field);
     }
     val = (val || "").toString().trim();
     return val ? clean(val, len) : null;
   }).filter(Boolean);
   return parts.join("-");
 }
-function forwardFill(data) {
-  // List the columns you want to fill down
-  const columns = [
-    "Vendor", "Product Category", "Type", "Material", "Connection type",
-    "Keyboard switch type", "Color", "Option1 Value", "Option2 Value", "Option3 Value"
-  ];
-  let last = {};
-  return data.map(row => {
-    columns.forEach(col => {
-      if (row[col] && row[col].toString().trim() !== "") {
-        last[col] = row[col];
-      } else {
-        row[col] = last[col] || "";
-      }
-    });
-    return row;
-  });
-}
+
 function generateSKUs(data, format) {
-  const sequenceMap = new Map();
+  let seq = 1;
   return data.map(row => {
-    const baseKey = (getCol(row, "Vendor") + "-" + getCol(row, "Product Category")).toUpperCase();
-    const seq = (sequenceMap.get(baseKey) || 0) + 1;
-    sequenceMap.set(baseKey, seq);
-    const variantId = String(seq).padStart(3, '0');
-    const baseSKU = parseFormat(format, row);
-    row.GeneratedSKU = baseSKU ? `${baseSKU}-${variantId}` : variantId;
+    row.GeneratedSKU = parseFormat(format, row, String(seq).padStart(3, '0'));
+    seq++;
     return row;
   });
 }
+
 function getExportFields() {
   if (!rawData.length) return ['GeneratedSKU'];
   const originalFields = Object.keys(rawData[0]);
   if (!originalFields.includes('GeneratedSKU')) originalFields.push('GeneratedSKU');
   return originalFields;
 }
+
 function showPreview(data) {
   previewTable.innerHTML = "";
   if (!data.length) return;
   const exportFields = getExportFields();
-  // Filter out hidden columns for preview
-  const previewFields = exportFields.filter(
-    h => !hiddenPreviewColumns.includes(h)
-  );
   const skuCounts = {};
   data.forEach(row => {
     skuCounts[row.GeneratedSKU] = (skuCounts[row.GeneratedSKU] || 0) + 1;
   });
   const headerRow = previewTable.insertRow();
-  previewFields.forEach(h => {
+  exportFields.forEach(h => {
     const th = document.createElement("th");
     th.innerText = h;
     headerRow.appendChild(th);
   });
-  // Limit preview to first 100 rows for even more speed (optional)
   const maxPreviewRows = 100;
   data.slice(0, maxPreviewRows).forEach((row, i) => {
     const tr = previewTable.insertRow();
     if (skuCounts[row.GeneratedSKU] > 1) tr.classList.add("duplicate-sku");
-    previewFields.forEach(h => {
+    exportFields.forEach(h => {
       const td = tr.insertCell();
       td.innerText = row[h] || '';
       if (h === "GeneratedSKU") {
@@ -447,35 +391,33 @@ function showPreview(data) {
   if (data.length > maxPreviewRows) {
     const tr = previewTable.insertRow();
     const td = tr.insertCell();
-    td.colSpan = previewFields.length;
+    td.colSpan = exportFields.length;
     td.innerText = `...and ${data.length - maxPreviewRows} more rows hidden for speed.`;
     td.style.textAlign = "center";
     td.style.color = "#888";
   }
 }
+
 function exportCSV() {
   if (!processedData.length) return alert("No data to export");
   const exportFields = getExportFields();
   const exportData = processedData.map(row => {
     let obj = {};
-    exportFields.forEach(f => {
-      obj[f] = row[f] !== undefined ? row[f] : "";
-    });
+    exportFields.forEach(f => obj[f] = row[f] !== undefined ? row[f] : "");
     return obj;
   });
   const ws = XLSX.utils.json_to_sheet(exportData);
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, "SKUs");
-  XLSX.writeFile(wb, "sku_output.csv", { bookType: "csv" });
+  XLSX.writeFile(wb, "sku_output.csv", {bookType: "csv"});
 }
+
 function exportXLSX() {
   if (!processedData.length) return alert("No data to export");
   const exportFields = getExportFields();
   const exportData = processedData.map(row => {
     let obj = {};
-    exportFields.forEach(f => {
-      obj[f] = row[f] !== undefined ? row[f] : "";
-    });
+    exportFields.forEach(f => obj[f] = row[f] !== undefined ? row[f] : "");
     return obj;
   });
   const ws = XLSX.utils.json_to_sheet(exportData);
@@ -483,123 +425,106 @@ function exportXLSX() {
   XLSX.utils.book_append_sheet(wb, ws, "SKUs");
   XLSX.writeFile(wb, "sku_output.xlsx");
 }
+
 function exportZIP() {
   if (!processedData.length) return alert("No data to export");
   const exportFields = getExportFields();
   const exportData = processedData.map(row => {
     let obj = {};
-    exportFields.forEach(f => {
-      obj[f] = row[f] !== undefined ? row[f] : "";
-    });
+    exportFields.forEach(f => obj[f] = row[f] !== undefined ? row[f] : "");
     return obj;
   });
   const zip = new JSZip();
   const wbCSV = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wbCSV, XLSX.utils.json_to_sheet(exportData), "SKUs");
-  const csv = XLSX.write(wbCSV, { bookType: "csv", type: "binary" });
+  const csv = XLSX.write(wbCSV, {bookType: "csv", type: "binary"});
   const wbXLSX = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wbXLSX, XLSX.utils.json_to_sheet(exportData), "SKUs");
-  const xlsx = XLSX.write(wbXLSX, { bookType: "xlsx", type: "binary" });
+  const xlsx = XLSX.write(wbXLSX, {bookType: "xlsx", type: "binary"});
   function s2ab(s) {
     const buf = new ArrayBuffer(s.length);
     const view = new Uint8Array(buf);
-    for (let i = 0; i < s.length; i++) view[i] = s.charCodeAt(i) & 0xff;
+    for (let i=0; i<s.length; i++) view[i] = s.charCodeAt(i) & 0xFF;
     return buf;
   }
   zip.file("sku_output.csv", s2ab(csv));
   zip.file("sku_output.xlsx", s2ab(xlsx));
-  zip.generateAsync({ type: "blob" }).then(blob => {
+  zip.generateAsync({type:"blob"}).then(blob => {
     const a = document.createElement("a");
     a.href = URL.createObjectURL(blob);
     a.download = "sku_output.zip";
     a.click();
   });
 }
-skuFormatPreset.addEventListener("change", function() {
-  if (this.value === "custom") {
-    skuCustomBuilder.style.display = "block";
-    updateCustomSKUFormat();
-  } else {
-    skuCustomBuilder.style.display = "none";
-    skuFormatInput.value = this.value;
-    processAndShow();
-  }
-});
-let debounceTimeout = null;
-function updateCustomSKUFormat() {
-  if (debounceTimeout) clearTimeout(debounceTimeout);
-  debounceTimeout = setTimeout(() => {
-    const fields = Array.from(document.querySelectorAll('.sku-part:checked')).map(cb => cb.dataset.field);
-    const maxLen = parseInt(skuMaxLen.value) || 3;
-    if (!fields.length) {
-      skuFormatInput.value = "";
-      processAndShow();
-      return;
-    }
-    let format = fields.map(f => `{${f}:${maxLen}}`).join("-");
-    skuFormatInput.value = format;
-    processAndShow();
-  }, 0);
-}
-document.querySelectorAll('.sku-part').forEach(cb => {
-  cb.addEventListener('change', updateCustomSKUFormat);
-});
-skuMaxLen.addEventListener('change', updateCustomSKUFormat);
 
-dropzone.addEventListener('click', function() {
-  fileInput.value = "";
-  fileInput.click();
+dropzone.addEventListener('click', () => fileInput.click());
+fileInput.addEventListener('change', e => {
+  if(e.target.files.length) handleFile(e.target.files[0]);
 });
-fileInput.addEventListener("change", e => {
-  if (e.target.files.length) handleFileWithCache(e.target.files[0]);
-});
-dropzone.addEventListener("dragover", e => {
+dropzone.addEventListener('dragover', e => {
   e.preventDefault();
-  dropzone.classList.add("dragover");
+  dropzone.classList.add('dragover');
 });
-dropzone.addEventListener("dragleave", e => {
-  dropzone.classList.remove("dragover");
+dropzone.addEventListener('dragleave', e => {
+  dropzone.classList.remove('dragover');
 });
-dropzone.addEventListener("drop", e => {
+dropzone.addEventListener('drop', e => {
   e.preventDefault();
-  dropzone.classList.remove("dragover");
-  if (e.dataTransfer.files.length) {
-    fileInput.files = e.dataTransfer.files;
-    handleFileWithCache(fileInput.files[0]);
-  }
+  dropzone.classList.remove('dragover');
+  if(e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]);
 });
-window.addEventListener("DOMContentLoaded", () => {
-  const savedFormat = localStorage.getItem("skuFormat");
-  if (savedFormat) {
-    skuFormatInput.value = savedFormat;
-  }
-  const savedData = localStorage.getItem("skuData");
-  if (savedData) {
-    try {
-      rawData = JSON.parse(savedData);
-      processAndShow();
-    } catch {}
-  }
-});
-function processAndShow() {
-  const format = skuFormatInput.value;
-  processedData = generateSKUs(rawData, format);
-  showPreview(processedData);
-  localStorage.setItem("skuFormat", skuFormatInput.value);
-  localStorage.setItem("skuData", JSON.stringify(rawData));
-}
-function handleFileWithCache(file) {
+
+function handleFile(file) {
   const reader = new FileReader();
   reader.onload = e => {
-    let wb = XLSX.read(e.target.result, { type: "binary" });
-    let sheet = wb.Sheets[wb.SheetNames[0]];
-    let data = XLSX.utils.sheet_to_json(sheet, { defval: "" });
-    status.innerText = `Loaded ${data.length} rows.`;
-    rawData = forwardFill(data);
+    const wb = XLSX.read(e.target.result, {type: 'binary'});
+    const sheet = wb.Sheets[wb.SheetNames[0]];
+    let data = XLSX.utils.sheet_to_json(sheet, {defval: ""});
+    rawData = data;
     processAndShow();
+    dropzone.textContent = `Loaded ${data.length} rows`;
   };
   reader.readAsBinaryString(file);
 }
+
+function processAndShow() {
+  let format = skuFormatPreset.value;
+  if (format === "custom") {
+    const fields = Array.from(document.querySelectorAll('.sku-part:checked')).map(cb => cb.dataset.field);
+    const maxLen = parseInt(skuMaxLen.value) || 3;
+    format = fields.map(f => `{${f}:${maxLen}}`).join("-");
+  }
+  processedData = generateSKUs(rawData, format);
+  showPreview(processedData);
+}
+
+skuFormatPreset.addEventListener('change', () => {
+  if (skuFormatPreset.value === "custom") {
+    skuCustomBuilder.style.display = "inline-block";
+  } else {
+    skuCustomBuilder.style.display = "none";
+    processAndShow();
+  }
+});
+document.querySelectorAll('.sku-part').forEach(cb => cb.addEventListener('change', processAndShow));
+skuMaxLen.addEventListener('change', processAndShow);
+
+downloadCSVBtn.addEventListener('click', exportCSV);
+downloadXLSXBtn.addEventListener('click', exportXLSX);
+downloadZIPBtn.addEventListener('click', exportZIP);
+
+// DARK MODE
+toggleDarkModeBtn.addEventListener('click', function() {
+  document.body.classList.toggle('dark');
+  localStorage.setItem("theme", document.body.classList.contains("dark") ? "dark" : "light");
+});
+(function() {
+  if (localStorage.getItem("theme") === "dark") {
+    document.body.classList.add("dark");
+  }
+})();
+
+// PUSH TO SHOPIFY (variant lookup by Vendor + Option values)
 pushShopifyBtn.addEventListener('click', async function() {
   if (!processedData.length) {
     alert("No data to push. Please upload and process your file first.");
@@ -610,29 +535,46 @@ pushShopifyBtn.addEventListener('click', async function() {
   const token = prompt("Enter your Shopify Admin API Access Token:");
   if (!token) return;
   if (!confirm("Are you sure you want to update SKUs in Shopify? This cannot be undone.")) return;
-  let variantIdKey = Object.keys(processedData[0]).find(k => normalize(k) === normalize('variant id'));
-  if (!variantIdKey) variantIdKey = Object.keys(processedData[0]).find(k => normalize(k) === normalize('variantid'));
-  if (!variantIdKey) variantIdKey = Object.keys(processedData[0]).find(k => normalize(k) === normalize('id'));
-  let skuKey = Object.keys(processedData[0]).find(k => normalize(k) === normalize('generatedsku'));
-  if (!skuKey) skuKey = 'GeneratedSKU';
-  if (!variantIdKey) {
-    alert("Variant ID column not found in your file. Shopify API requires Variant IDs.");
-    return;
-  }
+
   let updated = 0, failed = 0;
   for (const row of processedData) {
-    const variantId = row[variantIdKey];
-    const newSKU = row[skuKey];
-    if (!variantId || !newSKU) continue;
-    const url = `https://${shop}/admin/api/2023-01/variants/${variantId}.json`;
+    const vendor = row['Vendor'];
+    const opt1 = row['Option1 Value'];
+    const opt2 = row['Option2 Value'];
+    const opt3 = row['Option3 Value'];
+    const sku = row['GeneratedSKU'];
+    let variantId = null;
     try {
+      // Get all products for this vendor (may need paging for large catalogs)
+      const productsResp = await fetch(`https://${shop}/admin/api/2023-01/products.json?vendor=${encodeURIComponent(vendor)}&fields=id,title,variants,options`, {
+        headers: { "X-Shopify-Access-Token": token }
+      });
+      const productsData = await productsResp.json();
+      const products = productsData.products || [];
+      // Search for a matching variant
+      for (const product of products) {
+        for (const variant of product.variants) {
+          if (
+            (opt1 === "" || variant.option1 === opt1) &&
+            (opt2 === "" || variant.option2 === opt2) &&
+            (opt3 === "" || variant.option3 === opt3)
+          ) {
+            variantId = variant.id;
+            break;
+          }
+        }
+        if (variantId) break;
+      }
+      if (!variantId) throw new Error("Variant not found");
+      // Update the SKU
+      const url = `https://${shop}/admin/api/2023-01/variants/${variantId}.json`;
       const resp = await fetch(url, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
           "X-Shopify-Access-Token": token
         },
-        body: JSON.stringify({ variant: { id: variantId, sku: newSKU } })
+        body: JSON.stringify({ variant: { id: variantId, sku: sku } })
       });
       if (resp.ok) {
         updated++;
@@ -645,11 +587,6 @@ pushShopifyBtn.addEventListener('click', async function() {
   }
   alert(`Push complete!\nUpdated: ${updated}\nFailed: ${failed}\nCheck your Shopify admin for results.`);
 });
-
-// Ensure download functions are available for the buttons
-document.getElementById('downloadCSVBtn').addEventListener('click', exportCSV);
-document.getElementById('downloadXLSXBtn').addEventListener('click', exportXLSX);
-document.getElementById('downloadZIPBtn').addEventListener('click', exportZIP);
 </script>
 </body>
 </html>
