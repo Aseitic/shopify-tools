@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>SKU Generator (Inventory Export)</title>
+<title>SKU Generator (Product Export)</title>
 <link rel="icon" href="logo.png" />
 <link href="https://fonts.googleapis.com/css?family=Inter:400,600&display=swap" rel="stylesheet" />
 <style>
@@ -247,22 +247,20 @@
   <div class="logo-wrap">
     <img src="logo.png" alt="Logo" class="logo" />
   </div>
-  <h1>SKU Generator (Inventory Export)</h1>
-  <div id="dropzone">Drop your Shopify Inventory CSV here or click to upload</div>
+  <h1>SKU Generator (Product Export)</h1>
+  <div id="dropzone">Drop your Shopify Product CSV here or click to upload</div>
   <input type="file" id="fileInput" accept=".csv,.xlsx" style="display:none" />
   <div class="sku-builder" style="margin-top:1em;">
     <label for="skuFormatPreset">SKU Format Preset:</label>
     <select id="skuFormatPreset">
-      <option value="{handle:3}-{vendor:3}-{option1value:3}-{option2value:3}-{option3value:3}-{seq}">Handle-Vendor-Opt1-Opt2-Opt3-Seq</option>
-      <option value="{handle:3}-{vendor:3}-{option1value:3}-{option2value:3}-{seq}">Handle-Vendor-Opt1-Opt2-Seq</option>
-      <option value="{handle:3}-{vendor:3}-{option1value:3}-{seq}">Handle-Vendor-Opt1-Seq</option>
-      <option value="{handle:3}-{vendor:3}-{seq}">Handle-Vendor-Seq</option>
+      <option value="{handle:3}-{option1value:3}-{option2value:3}-{option3value:3}-{seq}">Handle-Opt1-Opt2-Opt3-Seq</option>
+      <option value="{handle:3}-{option1value:3}-{option2value:3}-{seq}">Handle-Opt1-Opt2-Seq</option>
+      <option value="{handle:3}-{option1value:3}-{seq}">Handle-Opt1-Seq</option>
+      <option value="{handle:3}-{seq}">Handle-Seq</option>
       <option value="custom">Custom…</option>
     </select>
     <span id="skuCustomBuilder" style="display:none; margin-left:1em;">
       <label><input type="checkbox" class="sku-part" data-field="handle" checked>Handle</label>
-      <label><input type="checkbox" class="sku-part" data-field="vendor" checked>Vendor</label>
-      <label><input type="checkbox" class="sku-part" data-field="color" checked>Color</label>
       <label><input type="checkbox" class="sku-part" data-field="option1value" checked>Option1 Value</label>
       <label><input type="checkbox" class="sku-part" data-field="option2value" checked>Option2 Value</label>
       <label><input type="checkbox" class="sku-part" data-field="option3value" checked>Option3 Value</label>
@@ -299,6 +297,8 @@ const pushShopifyBtn = document.getElementById('pushShopifyBtn');
 
 let rawData = [];
 let processedData = [];
+
+const hiddenPreviewColumns = ["Body (HTML)"];
 
 function normalize(str) {
   return (str || "").toLowerCase().replace(/[\s_\/\(\)\-]+/g, "");
@@ -365,12 +365,13 @@ function showPreview(data) {
   previewTable.innerHTML = "";
   if (!data.length) return;
   const exportFields = getExportFields();
+  const previewFields = exportFields.filter(f => !hiddenPreviewColumns.includes(f));
   const skuCounts = {};
   data.forEach(row => {
     skuCounts[row.GeneratedSKU] = (skuCounts[row.GeneratedSKU] || 0) + 1;
   });
   const headerRow = previewTable.insertRow();
-  exportFields.forEach(h => {
+  previewFields.forEach(h => {
     const th = document.createElement("th");
     th.innerText = h;
     headerRow.appendChild(th);
@@ -379,7 +380,7 @@ function showPreview(data) {
   data.slice(0, maxPreviewRows).forEach((row, i) => {
     const tr = previewTable.insertRow();
     if (skuCounts[row.GeneratedSKU] > 1) tr.classList.add("duplicate-sku");
-    exportFields.forEach(h => {
+    previewFields.forEach(h => {
       const td = tr.insertCell();
       td.innerText = row[h] || '';
       if (h === "GeneratedSKU") {
@@ -391,7 +392,7 @@ function showPreview(data) {
   if (data.length > maxPreviewRows) {
     const tr = previewTable.insertRow();
     const td = tr.insertCell();
-    td.colSpan = exportFields.length;
+    td.colSpan = previewFields.length;
     td.innerText = `...and ${data.length - maxPreviewRows} more rows hidden for speed.`;
     td.style.textAlign = "center";
     td.style.color = "#888";
@@ -524,7 +525,7 @@ toggleDarkModeBtn.addEventListener('click', function() {
   }
 })();
 
-// PUSH TO SHOPIFY (variant lookup by Vendor + Option values)
+// PUSH TO SHOPIFY (by Handle + Option values)
 pushShopifyBtn.addEventListener('click', async function() {
   if (!processedData.length) {
     alert("No data to push. Please upload and process your file first.");
@@ -537,36 +538,48 @@ pushShopifyBtn.addEventListener('click', async function() {
   if (!confirm("Are you sure you want to update SKUs in Shopify? This cannot be undone.")) return;
 
   let updated = 0, failed = 0;
+
   for (const row of processedData) {
-    const vendor = row['Vendor'];
-    const opt1 = row['Option1 Value'];
-    const opt2 = row['Option2 Value'];
-    const opt3 = row['Option3 Value'];
+    const handle = row['Handle'];
+    const opt1 = row['Option1 Value'] || "";
+    const opt2 = row['Option2 Value'] || "";
+    const opt3 = row['Option3 Value'] || "";
     const sku = row['GeneratedSKU'];
-    let variantId = null;
+
+    if (!handle) {
+      failed++;
+      continue;
+    }
+
     try {
-      // Get all products for this vendor (may need paging for large catalogs)
-      const productsResp = await fetch(`https://${shop}/admin/api/2023-01/products.json?vendor=${encodeURIComponent(vendor)}&fields=id,title,variants,options`, {
+      // Fetch product by handle
+      const productResp = await fetch(`https://${shop}/admin/api/2023-01/products.json?handle=${encodeURIComponent(handle)}`, {
         headers: { "X-Shopify-Access-Token": token }
       });
-      const productsData = await productsResp.json();
-      const products = productsData.products || [];
-      // Search for a matching variant
-      for (const product of products) {
-        for (const variant of product.variants) {
-          if (
-            (opt1 === "" || variant.option1 === opt1) &&
-            (opt2 === "" || variant.option2 === opt2) &&
-            (opt3 === "" || variant.option3 === opt3)
-          ) {
-            variantId = variant.id;
-            break;
-          }
-        }
-        if (variantId) break;
+      const productData = await productResp.json();
+      const products = productData.products || [];
+      if (products.length === 0) {
+        failed++;
+        continue;
       }
-      if (!variantId) throw new Error("Variant not found");
-      // Update the SKU
+      const product = products[0];
+      // Find variant by matching option values
+      let variantId = null;
+      for (const variant of product.variants) {
+        if (
+          (opt1 === "" || variant.option1 === opt1) &&
+          (opt2 === "" || variant.option2 === opt2) &&
+          (opt3 === "" || variant.option3 === opt3)
+        ) {
+          variantId = variant.id;
+          break;
+        }
+      }
+      if (!variantId) {
+        failed++;
+        continue;
+      }
+      // Update SKU
       const url = `https://${shop}/admin/api/2023-01/variants/${variantId}.json`;
       const resp = await fetch(url, {
         method: "PUT",
@@ -585,6 +598,7 @@ pushShopifyBtn.addEventListener('click', async function() {
       failed++;
     }
   }
+
   alert(`Push complete!\nUpdated: ${updated}\nFailed: ${failed}\nCheck your Shopify admin for results.`);
 });
 </script>
