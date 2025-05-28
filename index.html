@@ -66,7 +66,6 @@ tr.duplicate-sku { background: #ffe4e6 !important;}
   </div>
 </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.0/jszip.min.js"></script>
 <script>
 const dropzone = document.getElementById('dropzone');
 const fileInput = document.getElementById('fileInput');
@@ -115,4 +114,215 @@ function parseFormat(format, row, seq) {
       val = seq;
     } else if (/^option[123]value$/i.test(field)) {
       const n = field.match(/^option([123])value$/i)[1];
-      val = getCol(row, `Option
+      val = getCol(row, `Option${n} Value`);
+    } else {
+      val = getCol(row, field);
+    }
+    val = (val || "").toString().trim();
+    return val ? clean(val, len) : null;
+  }).filter(Boolean);
+  return parts.join("-");
+}
+function generateSKUs(data, format) {
+  let seq = 1;
+  return data.map(row => {
+    row.GeneratedSKU = parseFormat(format, row, String(seq).padStart(3, '0'));
+    seq++;
+    return row;
+  });
+}
+function getExportFields() {
+  if (!rawData.length) return ['GeneratedSKU'];
+  const originalFields = Object.keys(rawData[0]);
+  if (!originalFields.includes('GeneratedSKU')) originalFields.push('GeneratedSKU');
+  return originalFields;
+}
+function showPreview(data) {
+  previewTable.innerHTML = "";
+  if (!data.length) return;
+  const exportFields = getExportFields();
+  const previewFields = exportFields;
+  const skuCounts = {};
+  data.forEach(row => {
+    skuCounts[row.GeneratedSKU] = (skuCounts[row.GeneratedSKU] || 0) + 1;
+  });
+  const headerRow = previewTable.insertRow();
+  previewFields.forEach(h => {
+    const th = document.createElement("th");
+    th.innerText = h;
+    headerRow.appendChild(th);
+  });
+  const maxPreviewRows = 100;
+  data.slice(0, maxPreviewRows).forEach((row, i) => {
+    const tr = previewTable.insertRow();
+    if (skuCounts[row.GeneratedSKU] > 1) tr.classList.add("duplicate-sku");
+    previewFields.forEach(h => {
+      const td = tr.insertCell();
+      td.innerText = row[h] || '';
+      if (h === "GeneratedSKU") {
+        td.contentEditable = true;
+        td.oninput = () => data[i][h] = td.innerText.trim();
+      }
+    });
+  });
+  if (data.length > maxPreviewRows) {
+    const tr = previewTable.insertRow();
+    const td = tr.insertCell();
+    td.colSpan = previewFields.length;
+    td.innerText = `...and ${data.length - maxPreviewRows} more rows hidden for speed.`;
+    td.style.textAlign = "center";
+    td.style.color = "#888";
+  }
+}
+function exportCSV() {
+  if (!processedData.length) return alert("No data to export");
+  const exportFields = getExportFields();
+  const exportData = processedData.map(row => {
+    let obj = {};
+    exportFields.forEach(f => obj[f] = row[f] !== undefined ? row[f] : "");
+    return obj;
+  });
+  const ws = XLSX.utils.json_to_sheet(exportData);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "SKUs");
+  XLSX.writeFile(wb, "sku_output.csv", {bookType: "csv"});
+}
+function exportXLSX() {
+  if (!processedData.length) return alert("No data to export");
+  const exportFields = getExportFields();
+  const exportData = processedData.map(row => {
+    let obj = {};
+    exportFields.forEach(f => obj[f] = row[f] !== undefined ? row[f] : "");
+    return obj;
+  });
+  const ws = XLSX.utils.json_to_sheet(exportData);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "SKUs");
+  XLSX.writeFile(wb, "sku_output.xlsx");
+}
+function exportFailedRows() {
+  if (!failedRows.length) return alert("No failed rows to export");
+  const exportFields = Object.keys(failedRows[0]);
+  const ws = XLSX.utils.json_to_sheet(failedRows, {header: exportFields});
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "FailedRows");
+  XLSX.writeFile(wb, "failed_rows.csv", {bookType: "csv"});
+}
+dropzone.addEventListener('click', () => fileInput.click());
+fileInput.addEventListener('change', e => {
+  if(e.target.files.length) handleFile(e.target.files[0]);
+});
+dropzone.addEventListener('dragover', e => {
+  e.preventDefault();
+  dropzone.classList.add('dragover');
+});
+dropzone.addEventListener('dragleave', e => {
+  dropzone.classList.remove('dragover');
+});
+dropzone.addEventListener('drop', e => {
+  e.preventDefault();
+  dropzone.classList.remove('dragover');
+  if(e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]);
+});
+function handleFile(file) {
+  const reader = new FileReader();
+  reader.onload = e => {
+    const wb = XLSX.read(e.target.result, {type: 'binary'});
+    const sheet = wb.Sheets[wb.SheetNames[0]];
+    let data = XLSX.utils.sheet_to_json(sheet, {defval: ""});
+    rawData = data;
+    processAndShow();
+    dropzone.textContent = `Loaded ${data.length} rows`;
+  };
+  reader.readAsBinaryString(file);
+}
+function processAndShow() {
+  let format = skuFormatPreset.value;
+  if (format === "custom") {
+    const fields = Array.from(document.querySelectorAll('.sku-part:checked')).map(cb => cb.dataset.field);
+    const maxLen = parseInt(skuMaxLen.value) || 3;
+    format = fields.map(f => `{${f}:${maxLen}}`).join("-");
+  }
+  processedData = generateSKUs(rawData, format);
+  showPreview(processedData);
+}
+skuFormatPreset.addEventListener('change', () => {
+  if (skuFormatPreset.value === "custom") {
+    skuCustomBuilder.style.display = "inline-block";
+  } else {
+    skuCustomBuilder.style.display = "none";
+    processAndShow();
+  }
+});
+document.querySelectorAll('.sku-part').forEach(cb => cb.addEventListener('change', processAndShow));
+skuMaxLen.addEventListener('change', processAndShow);
+downloadCSVBtn.addEventListener('click', exportCSV);
+downloadXLSXBtn.addEventListener('click', exportXLSX);
+downloadFailedBtn.addEventListener('click', exportFailedRows);
+
+// PUSH TO SHOPIFY (BY VARIANT ID, with error logging and Excel E notation fix)
+pushShopifyBtn.addEventListener('click', async function() {
+  if (!processedData.length) {
+    alert("No data to push. Please upload and process your file first.");
+    return;
+  }
+  const shop = prompt("Enter your Shopify store domain (e.g. myshop.myshopify.com):");
+  if (!shop) return;
+  const token = prompt("Enter your Shopify Admin API Access Token:");
+  if (!token) return;
+  if (!confirm("Are you sure you want to update SKUs in Shopify? This cannot be undone.")) return;
+
+  let updated = 0, failed = 0;
+  failedRows = [];
+
+  for (const [index, row] of processedData.entries()) {
+    // Treat Variant ID as string to avoid Excel's E notation issues
+    let variantId = (row['Variant ID'] || "").toString().trim();
+    // Remove any accidental scientific notation (e.g. 4.47654E+15)
+    if (/e\+/i.test(variantId)) {
+      let num = Number(variantId);
+      if (!isNaN(num)) variantId = num.toFixed(0);
+    }
+    const sku = row['GeneratedSKU'];
+
+    if (!variantId || isNaN(variantId)) {
+      failed++;
+      failedRows.push({...row, Error: `Invalid Variant ID "${variantId}"`});
+      continue;
+    }
+
+    try {
+      const url = `https://${shop}/admin/api/2023-01/variants/${variantId}.json`;
+      const resp = await fetch(url, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          "X-Shopify-Access-Token": token
+        },
+        body: JSON.stringify({ variant: { sku: sku } })
+      });
+      if (resp.ok) {
+        updated++;
+      } else {
+        const error = await resp.text();
+        failed++;
+        failedRows.push({...row, Error: error});
+      }
+    } catch (e) {
+      failed++;
+      failedRows.push({...row, Error: e.message});
+    }
+  }
+
+  let message = `Push complete!\nUpdated: ${updated}\nFailed: ${failed}`;
+  if (failedRows.length > 0) {
+    message += `\n\nFirst 3 errors:\n` + failedRows.slice(0,3).map(r => r.Error).join('\n');
+    downloadFailedBtn.style.display = "";
+  } else {
+    downloadFailedBtn.style.display = "none";
+  }
+  alert(message);
+});
+</script>
+</body>
+</html>
