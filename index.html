@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>SKU Generator for Shopify (Variant ID, Custom Format)</title>
+<title>SKU Generator for Shopify (E-notation Proof)</title>
 <link href="https://fonts.googleapis.com/css?family=Inter:400,600&display=swap" rel="stylesheet" />
 <style>
 body { background: #f7f8fa; color: #23272f; font-family: 'Inter', Arial, sans-serif; margin: 0; padding: 0;}
@@ -32,7 +32,7 @@ tr.duplicate-sku { background: #ffe4e6 !important;}
 </head>
 <body>
 <div class="container">
-  <h1>SKU Generator for Shopify (Variant ID, Custom Format)</h1>
+  <h1>SKU Generator for Shopify (E-notation Proof)</h1>
   <div id="dropzone">Drop your <b>inventory_with_variant_ids.csv</b> here or click to upload</div>
   <input type="file" id="fileInput" accept=".csv,.xlsx" style="display:none" />
   <div class="sku-builder">
@@ -174,18 +174,35 @@ function showPreview(data) {
     td.style.color = "#888";
   }
 }
+
+// CUSTOM CSV EXPORT: Variant ID always as quoted string, never E-notation
 function exportCSV() {
   if (!processedData.length) return alert("No data to export");
   const exportFields = getExportFields();
-  const exportData = processedData.map(row => {
-    let obj = {};
-    exportFields.forEach(f => obj[f] = row[f] !== undefined ? row[f] : "");
-    return obj;
-  });
-  const ws = XLSX.utils.json_to_sheet(exportData);
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, "SKUs");
-  XLSX.writeFile(wb, "sku_output.csv", {bookType: "csv"});
+  let csv = exportFields.join(",") + "\r\n";
+  for (const row of processedData) {
+    let line = exportFields.map(f => {
+      let val = row[f] !== undefined ? row[f] : "";
+      if (f === "Variant ID") {
+        val = '"' + String(val).replace(/"/g, '""') + '"';
+      } else if (typeof val === "string" && (val.includes(",") || val.includes('"') || val.includes('\n'))) {
+        val = '"' + val.replace(/"/g, '""') + '"';
+      }
+      return val;
+    }).join(",");
+    csv += line + "\r\n";
+  }
+  const blob = new Blob([csv], {type: "text/csv"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "sku_output.csv";
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(() => {
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }, 100);
 }
 function exportXLSX() {
   if (!processedData.length) return alert("No data to export");
@@ -203,10 +220,30 @@ function exportXLSX() {
 function exportFailedRows() {
   if (!failedRows.length) return alert("No failed rows to export");
   const exportFields = Object.keys(failedRows[0]);
-  const ws = XLSX.utils.json_to_sheet(failedRows, {header: exportFields});
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, "FailedRows");
-  XLSX.writeFile(wb, "failed_rows.csv", {bookType: "csv"});
+  let csv = exportFields.join(",") + "\r\n";
+  for (const row of failedRows) {
+    let line = exportFields.map(f => {
+      let val = row[f] !== undefined ? row[f] : "";
+      if (f === "Variant ID") {
+        val = '"' + String(val).replace(/"/g, '""') + '"';
+      } else if (typeof val === "string" && (val.includes(",") || val.includes('"') || val.includes('\n'))) {
+        val = '"' + val.replace(/"/g, '""') + '"';
+      }
+      return val;
+    }).join(",");
+    csv += line + "\r\n";
+  }
+  const blob = new Blob([csv], {type: "text/csv"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "failed_rows.csv";
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(() => {
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }, 100);
 }
 dropzone.addEventListener('click', () => fileInput.click());
 fileInput.addEventListener('change', e => {
@@ -260,7 +297,7 @@ downloadCSVBtn.addEventListener('click', exportCSV);
 downloadXLSXBtn.addEventListener('click', exportXLSX);
 downloadFailedBtn.addEventListener('click', exportFailedRows);
 
-// PUSH TO SHOPIFY (BY VARIANT ID, with error logging and Excel E notation fix)
+// PUSH TO SHOPIFY (BY VARIANT ID, with error logging and E notation fix)
 pushShopifyBtn.addEventListener('click', async function() {
   if (!processedData.length) {
     alert("No data to push. Please upload and process your file first.");
@@ -272,57 +309,4 @@ pushShopifyBtn.addEventListener('click', async function() {
   if (!token) return;
   if (!confirm("Are you sure you want to update SKUs in Shopify? This cannot be undone.")) return;
 
-  let updated = 0, failed = 0;
-  failedRows = [];
-
-  for (const [index, row] of processedData.entries()) {
-    // Treat Variant ID as string to avoid Excel's E notation issues
-    let variantId = (row['Variant ID'] || "").toString().trim();
-    // Remove any accidental scientific notation (e.g. 4.47654E+15)
-    if (/e\+/i.test(variantId)) {
-      let num = Number(variantId);
-      if (!isNaN(num)) variantId = num.toFixed(0);
-    }
-    const sku = row['GeneratedSKU'];
-
-    if (!variantId || isNaN(variantId)) {
-      failed++;
-      failedRows.push({...row, Error: `Invalid Variant ID "${variantId}"`});
-      continue;
-    }
-
-    try {
-      const url = `https://${shop}/admin/api/2023-01/variants/${variantId}.json`;
-      const resp = await fetch(url, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          "X-Shopify-Access-Token": token
-        },
-        body: JSON.stringify({ variant: { sku: sku } })
-      });
-      if (resp.ok) {
-        updated++;
-      } else {
-        const error = await resp.text();
-        failed++;
-        failedRows.push({...row, Error: error});
-      }
-    } catch (e) {
-      failed++;
-      failedRows.push({...row, Error: e.message});
-    }
-  }
-
-  let message = `Push complete!\nUpdated: ${updated}\nFailed: ${failed}`;
-  if (failedRows.length > 0) {
-    message += `\n\nFirst 3 errors:\n` + failedRows.slice(0,3).map(r => r.Error).join('\n');
-    downloadFailedBtn.style.display = "";
-  } else {
-    downloadFailedBtn.style.display = "none";
-  }
-  alert(message);
-});
-</script>
-</body>
-</html>
+  let updated = 0, failed =
